@@ -10,41 +10,85 @@ import type {
 } from "openai/resources/index.mjs";
 import { createChatCompletion } from "./openai.js";
 
-const main = async () => {
-  const transport = new StdioClientTransport({
+const MCP_SERVER_NAME = {
+  /** 天気予報のMCPサーバー */
+  WEATHER: "weather",
+} as const;
+type MCP_SERVER_NAME = (typeof MCP_SERVER_NAME)[keyof typeof MCP_SERVER_NAME];
+
+// MCPサーバーのtransportを定義する
+const mcpServers: {
+  [key in MCP_SERVER_NAME]: StdioClientTransport;
+} = {
+  [MCP_SERVER_NAME.WEATHER]: new StdioClientTransport({
     command: "node",
     args: ["../weather-server/dist/main.cjs"],
-  });
+  }),
+} as const;
 
-  const client = new Client(
+// MCPサーバーに対応したMCPクライアントを定義する
+const mcpClients: { [key in MCP_SERVER_NAME]: Client } = Object.keys(
+  mcpServers
+).reduce((clients, serverName) => {
+  clients[serverName as MCP_SERVER_NAME] = new Client(
     {
-      name: "client",
+      name: `client of ${serverName}`,
       version: "1.0.0",
     },
     {
       capabilities: {},
     }
   );
+  return clients;
+}, {} as { [key in MCP_SERVER_NAME]: Client });
 
-  await client.connect(transport);
+// 関数名からMCPサーバー名を取得する
+const getMcpServerName = (functionName: string): MCP_SERVER_NAME => {
+  if (functionName.startsWith(`${MCP_SERVER_NAME.WEATHER}_`)) {
+    return MCP_SERVER_NAME.WEATHER;
+  }
 
-  // 利用可能なtool一覧を取得する
-  const listToolsResult = await client.request(
-    { method: "tools/list" },
-    ListToolsResultSchema
+  throw new Error(`Unknown function name: ${functionName}`);
+};
+
+const main = async () => {
+  const listToolsResults = await Promise.allSettled(
+    (Object.keys(mcpServers) as (keyof typeof mcpServers)[]).map(
+      async (serverName) => {
+        const mcpServer = mcpServers[serverName];
+        const mcpClient = mcpClients[serverName];
+        await mcpClient.connect(mcpServer);
+
+        // 利用可能なtool一覧を取得する
+        const listToolsResult = await mcpClient.request(
+          { method: "tools/list" },
+          ListToolsResultSchema
+        );
+
+        // MCPクライアントが返すtoolsをOPENAIのFunctionCallに必要なtoolsの形式に変換する
+        const tools: ChatCompletionTool[] = listToolsResult.tools.map(
+          (tool) => ({
+            type: "function",
+            function: {
+              name: `${serverName}_${tool.name}`, // NOTE: {サーバー名}_{ツール名}とすることで、MCPサーバーへのリクエストを識別できる
+              description: tool.description,
+              strict: true,
+              parameters: { ...tool.inputSchema, additionalProperties: false },
+            },
+          })
+        );
+
+        return tools;
+      }
+    )
   );
 
-  // MCPクライアントが返すtoolsをOPENAIのFunctionCallに必要なtoolsの形式に変換する
-  const tools: ChatCompletionTool[] = listToolsResult.tools.map((tool) => ({
-    type: "function",
-    function: {
-      name: tool.name,
-      description: tool.description,
-      strict: true,
-      parameters: { ...tool.inputSchema, additionalProperties: false },
-    },
-  }));
+  // OPENAIが解釈可能な関数定義一覧
+  const tools = listToolsResults
+    .filter((result) => result.status === "fulfilled")
+    .flatMap((result) => result.value);
 
+  // ユーザーのメッセージ
   const messages: ChatCompletionMessageParam[] = [
     {
       role: "user",
@@ -62,12 +106,15 @@ const main = async () => {
 
   const toolMessages: ChatCompletionMessageParam[] = await Promise.all(
     toolCalls.map(async (call) => {
+      const serverName = getMcpServerName(call.function.name);
+      const mcpClient = mcpClients[serverName];
+
       // MCPサーバーのtoolを呼び出す
-      const callToolResult = await client.request(
+      const callToolResult = await mcpClient.request(
         {
           method: "tools/call",
           params: {
-            name: call.function.name,
+            name: call.function.name.replace(`${serverName}_`, ""), // NOTE: {サーバー名}_ というprefixを削除する
             arguments: JSON.parse(call.function.arguments),
           },
         },
