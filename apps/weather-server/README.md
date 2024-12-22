@@ -14,8 +14,8 @@ https://claude.ai/download
 $ npm install
 $ npm run build
 
-# build/main.jsのフルパスを表示する
-$ find `pwd` -maxdepth 2 -name main.js
+# dist/main.cjsのフルパスを表示する
+$ find `pwd` -maxdepth 2 -name main.cjs
 ```
 
 ### 3. Claude Desktopの設定でMCPサーバーを登録する
@@ -33,8 +33,8 @@ $ vi ~/Library/Application\ Support/Claude/claude_desktop_config.json
     "weather": {
       // NOTE: nodeのフルパスを指定（`$ which node`）
       "command": "node",
-      // NOTE: build/main.jsのフルパスを指定
-      "args": ["xxx/build/main.js"]
+      // NOTE: dist/main.jsのフルパスを指定
+      "args": ["xxx/dist/main.cjs"]
     }
   }
 }
