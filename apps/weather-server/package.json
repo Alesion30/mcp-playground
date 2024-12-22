@@ -1,5 +1,5 @@
 {
-  "name": "weather-server",
+  "name": "@mcp/weather-server",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -8,7 +8,8 @@
     "type": "tsc --noEmit"
   },
   "dependencies": {
-    "@mcp/external-api": "^0.0.0",
+    "@mcp/constants": "*",
+    "@mcp/external-api": "*",
     "@modelcontextprotocol/sdk": "1.0.4",
     "valibot": "1.0.0-beta.9"
   }

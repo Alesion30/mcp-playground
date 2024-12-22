@@ -1,14 +1,15 @@
 {
-  "name": "client",
+  "name": "@mcp/client",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --loader ts-node/esm src/main.ts",
-    "build": "tsc",
+    "dev": "tsup && node ./dist/main.cjs",
+    "build": "tsup",
     "type": "tsc --noEmit"
   },
   "dependencies": {
+    "@mcp/constants": "*",
     "@modelcontextprotocol/sdk": "1.0.4"
   },
   "devDependencies": {

@@ -4,13 +4,12 @@ import {
   CallToolResultSchema,
   ListToolsResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { MCP_WEATHER_TOOLS } from "@mcp/constants/mcp-tools.js";
 
 const main = async () => {
   const transport = new StdioClientTransport({
     command: "node",
-    args: [
-      "/Users/s20814/work/sandbox/mcp-example/apps/weather-server/dist/main.cjs",
-    ],
+    args: ["../weather-server/dist/main.cjs"],
   });
 
   const client = new Client(
@@ -39,7 +38,7 @@ const main = async () => {
     {
       method: "tools/call",
       params: {
-        name: "get-forecast",
+        name: MCP_WEATHER_TOOLS.GET_FORECAST,
         arguments: {
           latitude: 40.7128,
           longitude: -74.006,

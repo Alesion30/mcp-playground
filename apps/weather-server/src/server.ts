@@ -6,6 +6,7 @@ import {
 import { parse, ValiError } from "valibot";
 import { WeatherForecastArguments } from "./schemas/weather.js";
 import { weatherGovApi } from "@mcp/external-api";
+import { MCP_WEATHER_TOOLS } from "@mcp/constants/mcp-tools.js";
 
 export const server = new Server(
   {
@@ -19,15 +20,11 @@ export const server = new Server(
   }
 );
 
-const MCP_SERVER_TOOL_NAME = {
-  GET_FORECAST: "get-forecast",
-} as const;
-
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
       {
-        name: MCP_SERVER_TOOL_NAME.GET_FORECAST,
+        name: MCP_WEATHER_TOOLS.GET_FORECAST,
         description: "Get weather forecast for a location (US Only)",
         inputSchema: {
           type: "object",
@@ -52,7 +49,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   try {
-    if (name === MCP_SERVER_TOOL_NAME.GET_FORECAST) {
+    if (name === MCP_WEATHER_TOOLS.GET_FORECAST) {
       const { latitude, longitude } = parse(WeatherForecastArguments, args);
       const weatherPointsResponse = await weatherGovApi.fetchWeatherPoints({
         latitude,
@@ -82,7 +79,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      const weatherForecastResponse = await weatherGovApi.fetchWeatherForecast(forecastUrl);
+      const weatherForecastResponse = await weatherGovApi.fetchWeatherForecast(
+        forecastUrl
+      );
       if (!weatherForecastResponse) {
         return {
           content: [
