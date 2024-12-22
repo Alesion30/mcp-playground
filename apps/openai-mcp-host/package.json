@@ -1,5 +1,5 @@
 {
-  "name": "@mcp/client",
+  "name": "@mcp/openai-mcp-host",
   "version": "0.0.0",
   "private": true,
   "type": "module",
