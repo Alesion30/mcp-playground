@@ -5,6 +5,21 @@
 
 # My MCP Example
 
+|name|description|
+|---|---|
+|openai-mcp-host|OpenAIを用いたMCPホスト|
+|weather-server|天気を取得するMCPサーバー|
+
+サードパーティ製のMCPサーバーはこちらが参考になる: https://github.com/modelcontextprotocol/servers
+
+## Getting Started
+
+```sh
+$ npm install
+```
+
+初めての方は、まず[openai-mcp-host](./apps/openai-mcp-host/README.md)を動かすことをおすすめする。
+
 ## MCP(Model Context Protocol)
 
 MCPは、アプリケーションがLLMにコンテキストを提供する方法を標準化したオープンプロトコルである。これはAIアプリケーション用のUSB-Cポートのようなもので、AIモデルと様々なデータソースやツールを標準的な方法で接続することを可能にする。
@@ -17,9 +32,9 @@ flowchart LR
   (Claude, IDEs, Tools)
   """]
 
-  Server1["MCP Server A"]
-  Server2["MCP Server B"]
-  Server3["MCP Server C"]
+  ServerA["MCP Server A"]
+  ServerB["MCP Server B"]
+  ServerC["MCP Server C"]
 
   DB1["Local Data Source A"]
   DB2["Local Data Source B"]
@@ -27,27 +42,88 @@ flowchart LR
 
   subgraph Local Computer
   User <--> Client
-  Client <--> |MCP Protocol| Server1
-  Client <--> |MCP Protocol| Server2
-  Client <--> |MCP Protocol| Server3
+  Client <--> |MCP Protocol| ServerA
+  Client <--> |MCP Protocol| ServerB
+  Client <--> |MCP Protocol| ServerC
 
-  Server1 <--> DB1
-  Server2 <--> DB2
+  ServerA <--> DB1
+  ServerB <--> DB2
   end
 
   subgraph Internet
-  Server2 <--> |Web APIs| Services
-  Server3 <--> |Web APIs| Services
+  ServerB <--> |Web APIs| Services
+  ServerC <--> |Web APIs| Services
   end
 ```
 
 参考: https://modelcontextprotocol.io/introduction
 
-### 【類似概念】 Function Calling
+
+実際は、ClaudeのようなMCPホストの裏側では、Function Callingを駆使しつつ、MCPクライアントとMCPサーバー間をやりとりしているに過ぎない。Function Callingのプロトコルを管理するMCPクライアントと実際の外部処理を行うMCPサーバーで責務を分けることがMCPの考えにおいて肝となる。基本的にはMCPクライアントとMCPサーバーは1対1の関係となり、MCPホストが複数のMCPクライアントを束ねる形を取る。
 
 ```mermaid
 flowchart LR
   User(fa:fa-user User)
+
+  GenerationAI["""
+  Generation AI
+  (Claude, GPT, Gemini...)
+  """]
+
+  ClientA["MCP Client A"]
+  ClientB["MCP Client B"]
+  ClientC["MCP Client C"]
+
+  ServerA_list["MCP Server A - ListTools"]
+  ServerA_call["MCP Server A - CallTool"]
+  ServerB["MCP Server B"]
+  ServerC["MCP Server C"]
+
+  DB["Local Data Source"]
+  Services["Remote Services"]
+
+  subgraph "Internet(GenerationAI)"
+  GenerationAI
+  end
+
+  subgraph Local Computer
+  User <--> Host
+
+  subgraph Host
+  ClientA
+  ClientB
+  ClientC
+  end
+
+  subgraph ServerA["MCP Server A"]
+  ServerA_list
+  ServerA_call
+  end
+
+  ServerA_call <--> DB
+
+  ClientA --> |"request(list/tools)"| ServerA_list
+  ServerA_list --> |tools| ClientA
+  ClientB <--> ServerB
+  ClientC <--> ServerC
+
+  Host --> |tools| GenerationAI
+  GenerationAI --> |calls| Host
+
+  ClientA --> |"request(call/tool)"| ServerA_call
+  ServerA_call --> |result| ClientA
+  end
+
+  subgraph Internet
+  ServerA_call <--> Services
+  end
+
+```
+
+### 【補足】 Function Calling
+
+```mermaid
+flowchart LR
   Server["Server"]
   OpenAI["OpenAI API"]
 
@@ -58,10 +134,8 @@ flowchart LR
   Services["Remote Services"]
 
   subgraph Local Computer
-  User <--> Server
-
   subgraph S["Application Server"]
-    Server --> |function calls| Condition{switch}
+    Server --> |calls| Condition{switch}
     Condition --> |callA| Function1
     Condition --> |callB| Function2
     Condition --> |callC| Function3
@@ -72,8 +146,8 @@ flowchart LR
   end
 
   subgraph "Internet(OpenAI)"
-  Server --> |prompt| OpenAI
-  OpenAI --> |response| Server
+  Server --> |tools| OpenAI
+  OpenAI --> |calls| Server
   end
 
   subgraph Internet
@@ -84,62 +158,9 @@ flowchart LR
 
 参考: https://platform.openai.com/docs/guides/function-calling
 
-
-## Getting Started (Claude Desktopを用いた方法)
-
-### 1. Claude Desktopをダウンロードする
-
-https://claude.ai/download
-
-### 2. Custom MCPサーバーをビルドする
-
-```sh
-$ npm install
-$ npm run build
-
-# main.cjsのフルパスを表示する
-$ find $(pwd)/apps -type f -name "main.cjs"
-```
-
-### 3. Claude Desktopの設定でMCPサーバーを登録する
-
-> [!NOTE]
-> 以下は、macOS版でのやり方です。その他のOSについては[公式ドキュメント](https://modelcontextprotocol.io/quickstart/server#:~:text=Testing%20your%20server%20with%20Claude%20for%20Desktop)を参照してください。
-
-```sh
-$ vi ~/Library/Application\ Support/Claude/claude_desktop_config.json
-```
-
-```json
-{
-  "mcpServers": {
-    "weather": {
-      // NOTE: nodeのフルパスを指定（`$ which node`）
-      "command": "node",
-      // NOTE: main.cjsのフルパスを指定
-      "args": ["xxx/dist/main.cjs"]
-    },
-    // ...
-  }
-}
-```
-
-### 4. Claude DesktopでMCPサーバーが登録されていることを確認する
-
-Claude Desktopを再起動し、MCPサーバーが登録されていることを確認する
-
-![](./images/mcp-server-setting.png)
-![](./images/mcp-server-setting2.png)
-
-試しにサンフランシスコの天気を聞くと、MCPサーバーから天気予報の情報を取得し、生成AIのメッセージに天気の情報が組み込まれていることがわかる。
-
-![](./images/get-forecast.png)
-
-（参考）MCPサーバーがない場合
-
-![](./images/none-mcp-server.png)
-
 ## 参考リンク
 
 - https://www.anthropic.com/news/model-context-protocol
 - https://modelcontextprotocol.io/quickstart/server
+- https://github.com/modelcontextprotocol/typescript-sdk
+- https://github.com/modelcontextprotocol/servers?tab=readme-ov-file
