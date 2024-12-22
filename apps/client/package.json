@@ -1,8 +1,9 @@
 {
-  "name": "mcp-example",
+  "name": "client",
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "type": "tsc --noEmit"
   }
 }

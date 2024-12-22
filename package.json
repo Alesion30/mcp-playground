@@ -6,7 +6,8 @@
     "node": "22"
   },
   "scripts": {
-    "build": "turbo build"
+    "build": "turbo build",
+    "type": "turbo type"
   },
   "packageManager": "npm@10.9.0",
   "devDependencies": {
