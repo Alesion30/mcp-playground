@@ -2,8 +2,16 @@
   "name": "client",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
+    "dev": "node --loader ts-node/esm src/main.ts",
     "build": "tsc",
     "type": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.0.4"
+  },
+  "devDependencies": {
+    "ts-node": "10.9.2"
   }
 }
