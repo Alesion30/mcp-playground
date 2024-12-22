@@ -2,7 +2,12 @@
   "name": "weather-server",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc && node -e \"require('fs').chmodSync('build/main.js', '755')\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.0.4",
+    "valibot": "1.0.0-beta.9"
   }
 }
