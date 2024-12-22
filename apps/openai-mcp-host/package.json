@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsup && node ./dist/main.cjs -m ニューヨークの天気を教えて",
     "build": "tsup",
     "type": "tsc --noEmit"
   },
