@@ -1,5 +1,6 @@
 {
   "name": "mcp-example",
+  "private": true,
   "version": "0.0.0",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -8,5 +9,12 @@
   "license": "ISC",
   "engines": {
     "node": "22"
+  },
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ],
+  "devDependencies": {
+    "typescript": "^5.7.2"
   }
 }
