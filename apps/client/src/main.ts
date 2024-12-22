@@ -4,7 +4,11 @@ import {
   CallToolResultSchema,
   ListToolsResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { MCP_WEATHER_TOOLS } from "@mcp/constants/mcp-tools.js";
+import type {
+  ChatCompletionMessageParam,
+  ChatCompletionTool,
+} from "openai/resources/index.mjs";
+import { createChatCompletion } from "./openai.js";
 
 const main = async () => {
   const transport = new StdioClientTransport({
@@ -22,32 +26,72 @@ const main = async () => {
     }
   );
 
-  console.log("Connecting to server...");
   await client.connect(transport);
-  console.log("Connected to server!");
 
   // 利用可能なtool一覧を取得する
-  const tools = await client.request(
+  const listToolsResult = await client.request(
     { method: "tools/list" },
     ListToolsResultSchema
   );
-  console.log("Tools:", JSON.stringify(tools, null, 2));
 
-  // 天気予報のtoolを呼び出す
-  const toolContent = await client.request(
-    {
-      method: "tools/call",
-      params: {
-        name: MCP_WEATHER_TOOLS.GET_FORECAST,
-        arguments: {
-          latitude: 40.7128,
-          longitude: -74.006,
-        },
-      },
+  // MCPクライアントが返すtoolsをOPENAIのFunctionCallに必要なtoolsの形式に変換する
+  const tools: ChatCompletionTool[] = listToolsResult.tools.map((tool) => ({
+    type: "function",
+    function: {
+      name: tool.name,
+      description: tool.description,
+      strict: true,
+      parameters: { ...tool.inputSchema, additionalProperties: false },
     },
-    CallToolResultSchema
+  }));
+
+  const messages: ChatCompletionMessageParam[] = [
+    {
+      role: "user",
+      content: "What is the weather like in New York?",
+    },
+  ];
+
+  const message = await createChatCompletion(messages, tools);
+  messages.push(message);
+
+  const toolCalls = message.tool_calls;
+  if (!toolCalls) {
+    throw new Error("No toolCalls found in response.");
+  }
+
+  const toolMessages: ChatCompletionMessageParam[] = await Promise.all(
+    toolCalls.map(async (call) => {
+      // MCPサーバーのtoolを呼び出す
+      const callToolResult = await client.request(
+        {
+          method: "tools/call",
+          params: {
+            name: call.function.name,
+            arguments: JSON.parse(call.function.arguments),
+          },
+        },
+        CallToolResultSchema
+      );
+
+      if (callToolResult.isError) {
+        throw new Error(`Error in tool call: ${callToolResult.error}`);
+      }
+
+      return {
+        tool_call_id: call.id,
+        role: "tool",
+        content: callToolResult.content.map((v) => ({
+          text: `${v.text}`,
+          type: "text",
+        })),
+      };
+    })
   );
-  console.log("tool content:", toolContent);
+  messages.push(...toolMessages);
+
+  const result = await createChatCompletion(messages);
+  console.log(JSON.stringify([...messages, result], null, 2));
 };
 
 main().catch((error) => {
