@@ -7,10 +7,10 @@
 
 |name|description|
 |---|---|
-|openai-mcp-host|OpenAIを用いたMCPホスト|
-|weather-server|天気を取得するMCPサーバー|
+|[openai-mcp-host](./apps/openai-mcp-host/)|OpenAIを用いたMCPホスト|
+|[weather-server](./apps/weather-server/)|天気を取得するMCPサーバー|
 
-サードパーティ製のMCPサーバーはこちらが参考になる: https://github.com/modelcontextprotocol/servers
+※ サードパーティ製のMCPサーバー集: https://github.com/modelcontextprotocol/servers
 
 ## Getting Started
 
@@ -18,7 +18,7 @@
 $ npm install
 ```
 
-初めての方は、まず[openai-mcp-host](./apps/openai-mcp-host/README.md)を動かすことをおすすめする。
+初めての方は、まず[weather-server](./apps/weather-server/README.md)を動かしてみることをおすすめする。
 
 ## MCP(Model Context Protocol)
 
@@ -59,7 +59,7 @@ flowchart LR
 参考: https://modelcontextprotocol.io/introduction
 
 
-実際は、ClaudeのようなMCPホストの裏側では、Function Callingを駆使しつつ、MCPクライアントとMCPサーバー間をやりとりしているに過ぎない。Function Callingのプロトコルを管理するMCPクライアントと実際の外部処理を行うMCPサーバーで責務を分けることがMCPの考えにおいて肝となる。基本的にはMCPクライアントとMCPサーバーは1対1の関係となり、MCPホストが複数のMCPクライアントを束ねる形を取る。
+実際は、Claude DesktopのようなMCPホストの裏側では、Function Callingを駆使しつつ、MCPクライアントとMCPサーバー間をやりとりしているに過ぎない。Function Callingのプロトコルを管理するMCPクライアントと実際の外部処理を行うMCPサーバーで責務を分けることがMCPの考えにおいて肝となる。基本的にはMCPクライアントとMCPサーバーは1対1の関係となり、MCPホストが複数のMCPクライアントを束ねる形を取る。
 
 ```mermaid
 flowchart LR

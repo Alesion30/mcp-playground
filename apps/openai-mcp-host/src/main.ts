@@ -147,13 +147,13 @@ const main = async () => {
   messages.push(...toolMessages);
 
   const result = await createChatCompletion(messages);
-  console.log(JSON.stringify([...messages, result], null, 2));
 
   // MCPクライアントをすべてcloseする
   await Promise.allSettled(
     Object.values(mcpClients).map((client) => client.close())
   );
 
+  console.log("OpenAI response:", result.content);
   return result.content;
 };
 
