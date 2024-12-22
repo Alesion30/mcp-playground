@@ -48,27 +48,32 @@ flowchart LR
 ```mermaid
 flowchart LR
   User(fa:fa-user User)
-  Server["Application Server"]
+  Server["Server"]
   OpenAI["OpenAI API"]
 
-  Function1["Function A on Server"]
-  Function2["Function B on Server"]
-  Function3["Function C on Server"]
+  Function1["Function A"]
+  Function2["Function B"]
+  Function3["Function C"]
   DB["Local Data Source"]
   Services["Remote Services"]
 
   subgraph Local Computer
   User <--> Server
-  Server <--> Function1
-  Server <--> Function2
-  Server <--> Function3
+
+  subgraph S["Application Server"]
+    Server --> |function calls| Condition{switch}
+    Condition --> |callA| Function1
+    Condition --> |callB| Function2
+    Condition --> |callC| Function3
+  end
+
   Function1 <--> DB
   Function2 <--> DB
   end
 
   subgraph "Internet(OpenAI)"
   Server --> |prompt| OpenAI
-  OpenAI --> |response with function calls| Server
+  OpenAI --> |response| Server
   end
 
   subgraph Internet
