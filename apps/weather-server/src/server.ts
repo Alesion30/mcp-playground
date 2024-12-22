@@ -5,7 +5,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { parse, ValiError } from "valibot";
 import { WeatherForecastArguments } from "./schemas/weather.js";
-import { fetchWeatherForecast, fetchWeatherPoints } from "./api/weather.js";
+import { weatherGovApi } from "@mcp/external-api";
 
 export const server = new Server(
   {
@@ -54,7 +54,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     if (name === MCP_SERVER_TOOL_NAME.GET_FORECAST) {
       const { latitude, longitude } = parse(WeatherForecastArguments, args);
-      const weatherPointsResponse = await fetchWeatherPoints({
+      const weatherPointsResponse = await weatherGovApi.fetchWeatherPoints({
         latitude,
         longitude,
       });
@@ -82,7 +82,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      const weatherForecastResponse = await fetchWeatherForecast(forecastUrl);
+      const weatherForecastResponse = await weatherGovApi.fetchWeatherForecast(forecastUrl);
       if (!weatherForecastResponse) {
         return {
           content: [

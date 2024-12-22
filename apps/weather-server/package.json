@@ -7,6 +7,7 @@
     "build": "tsup"
   },
   "dependencies": {
+    "@mcp/external-api": "^0.0.0",
     "@modelcontextprotocol/sdk": "1.0.4",
     "valibot": "1.0.0-beta.9"
   }

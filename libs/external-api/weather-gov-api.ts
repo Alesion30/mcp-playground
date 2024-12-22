@@ -13,7 +13,10 @@ type FetchWeatherPointResponse = {
   };
 };
 
-export const fetchWeatherPoints = async ({
+/**
+ * 地点情報を取得する
+ */
+const fetchWeatherPoints = async ({
   latitude,
   longitude,
 }: FetchWeatherPointPayload): Promise<FetchWeatherPointResponse> => {
@@ -41,7 +44,10 @@ type FetchWeatherForecastResponse = {
   };
 };
 
-export const fetchWeatherForecast = async (
+/**
+ * 天気予報を取得する
+ */
+const fetchWeatherForecast = async (
   forecastUrl: string
 ): Promise<FetchWeatherForecastResponse> => {
   const forecastUrlResult = safeParse(pipe(string(), url()), forecastUrl);
@@ -57,3 +63,8 @@ export const fetchWeatherForecast = async (
 
   return await response.json();
 };
+
+export const weatherGovApi = {
+  fetchWeatherPoints,
+  fetchWeatherForecast,
+} as const;

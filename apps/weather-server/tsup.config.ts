@@ -6,4 +6,5 @@ export default defineConfig({
   format: "cjs",
   minify: true,
   platform: "node",
+  noExternal: [/^@mcp\//],
 });
