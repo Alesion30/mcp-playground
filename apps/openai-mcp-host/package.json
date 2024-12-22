@@ -4,13 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsup && node --env-file=.env ./dist/main.cjs -m ニューヨークの天気を教えて",
+    "dev": "tsup && node ./dist/main.cjs -m ニューヨークの天気を教えて",
     "build": "tsup",
     "type": "tsc --noEmit"
   },
   "dependencies": {
     "@mcp/constants": "*",
     "@modelcontextprotocol/sdk": "1.0.4",
+    "dotenv": "16.4.7",
     "openai": "4.77.0"
   },
   "devDependencies": {
