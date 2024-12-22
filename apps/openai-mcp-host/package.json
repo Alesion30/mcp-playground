@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsup && node --env-file=.env ./dist/main.cjs",
+    "dev": "tsup && node --env-file=.env ./dist/main.cjs -m ニューヨークの天気を教えて",
     "build": "tsup",
     "type": "tsc --noEmit"
   },

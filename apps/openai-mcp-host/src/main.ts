@@ -9,6 +9,7 @@ import type {
   ChatCompletionTool,
 } from "openai/resources/index.mjs";
 import { createChatCompletion } from "./openai.js";
+import program from "commander";
 
 const MCP_SERVER_NAME = {
   /** 天気予報のMCPサーバー */
@@ -52,6 +53,13 @@ const getMcpServerName = (functionName: string): MCP_SERVER_NAME => {
 };
 
 const main = async () => {
+  program.option("-m, --message <optionValue>", "ユーザーのメッセージ");
+  const options = program.parse(process.argv);
+  const userMessage = options.message;
+  if (!userMessage || typeof userMessage !== "string") {
+    throw new Error("No user message found.");
+  }
+
   const listToolsResults = await Promise.allSettled(
     (Object.keys(mcpServers) as (keyof typeof mcpServers)[]).map(
       async (serverName) => {
@@ -70,7 +78,7 @@ const main = async () => {
           (tool) => ({
             type: "function",
             function: {
-              name: `${serverName}_${tool.name}`, // NOTE: {サーバー名}_{ツール名}とすることで、MCPサーバーへのリクエストを識別できる
+              name: `${serverName}_${tool.name}`, // NOTE: {サーバー名}_ というprefixを追加する
               description: tool.description,
               strict: true,
               parameters: { ...tool.inputSchema, additionalProperties: false },
@@ -92,7 +100,7 @@ const main = async () => {
   const messages: ChatCompletionMessageParam[] = [
     {
       role: "user",
-      content: "What is the weather like in New York?",
+      content: userMessage,
     },
   ];
 
@@ -106,7 +114,7 @@ const main = async () => {
 
   const toolMessages: ChatCompletionMessageParam[] = await Promise.all(
     toolCalls.map(async (call) => {
-      const serverName = getMcpServerName(call.function.name);
+      const serverName = getMcpServerName(call.function.name); // NOTE: {サーバー名}_ というprefix を元にMCPサーバーを特定する
       const mcpClient = mcpClients[serverName];
 
       // MCPサーバーのtoolを呼び出す
