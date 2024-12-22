@@ -2,19 +2,21 @@
   "name": "mcp-example",
   "private": true,
   "version": "0.0.0",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "Yuta Ohira <ohira_yuta@cyberagent.co.jp>",
-  "license": "ISC",
   "engines": {
     "node": "22"
+  },
+  "scripts": {
+    "build": "turbo build"
+  },
+  "packageManager": "npm@10.9.0",
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
   },
   "workspaces": [
     "apps/*",
     "libs/*"
   ],
-  "devDependencies": {
-    "typescript": "^5.7.2"
-  }
+  "author": "Yuta Ohira <ohira_yuta@cyberagent.co.jp>",
+  "license": "ISC"
 }
