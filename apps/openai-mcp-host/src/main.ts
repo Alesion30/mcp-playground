@@ -148,6 +148,13 @@ const main = async () => {
 
   const result = await createChatCompletion(messages);
   console.log(JSON.stringify([...messages, result], null, 2));
+
+  // MCPクライアントをすべてcloseする
+  await Promise.allSettled(
+    Object.values(mcpClients).map((client) => client.close())
+  );
+
+  return result.content;
 };
 
 main().catch((error) => {
