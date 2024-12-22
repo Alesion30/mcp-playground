@@ -16,6 +16,7 @@
 
 ```sh
 $ npm install
+$ npm run build
 ```
 
 初めての方は、まず[weather-server](./apps/weather-server/README.md)を動かしてみることをおすすめする。

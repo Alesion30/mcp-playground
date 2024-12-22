@@ -11,11 +11,10 @@ https://claude.ai/download
 ### 2. Custom MCPサーバーをビルドする
 
 ```sh
-$ npm install
 $ npm run build
 
 # main.cjsのフルパスを表示する
-$ find $(pwd)/apps -type f -name "main.cjs"
+$ find $(pwd) -type f -name "main.cjs"
 ```
 
 ### 3. Claude Desktopの設定でMCPサーバーを登録する
