@@ -1,0 +1,12 @@
+{
+  "name": "mcp-example",
+  "version": "0.0.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Yuta Ohira <ohira_yuta@cyberagent.co.jp>",
+  "license": "ISC",
+  "engines": {
+    "node": "22"
+  }
+}
