@@ -11,31 +11,30 @@ import type {
 import { createChatCompletion } from "./openai.js";
 import program from "commander";
 import { MCP_SERVERS, MCP_SERVER_TYPES } from "@mcp/constants/mcp-servers.mjs";
+import {
+  appendServerPrefix,
+  getServerFromPrefix,
+  removeServerPrefix,
+} from "./utils/handle-server-prefix.js";
+
+type MCP_CLIENTS = { [key in MCP_SERVER_TYPES]: Client };
 
 // MCPサーバーに対応したMCPクライアントを定義する
-const MCP_CLIENTS: { [key in MCP_SERVER_TYPES]: Client } = Object.values(
-  MCP_SERVER_TYPES
-).reduce((clients, serverName) => {
-  clients[serverName] = new Client(
-    {
-      name: `client of ${serverName}`,
-      version: "1.0.0",
-    },
-    {
-      capabilities: {},
-    }
-  );
-  return clients;
-}, {} as { [key in MCP_SERVER_TYPES]: Client });
-
-// 関数名からMCPサーバー名を取得する
-const getMcpServerName = (functionName: string): MCP_SERVER_TYPES => {
-  if (functionName.startsWith(`${MCP_SERVER_TYPES.WEATHER}_`)) {
-    return MCP_SERVER_TYPES.WEATHER;
-  }
-
-  throw new Error(`Unknown function name: ${functionName}`);
-};
+const MCP_CLIENTS = Object.values(MCP_SERVER_TYPES).reduce(
+  (clients, serverName) => {
+    clients[serverName] = new Client(
+      {
+        name: `client of ${serverName}`,
+        version: "1.0.0",
+      },
+      {
+        capabilities: {},
+      }
+    );
+    return clients;
+  },
+  {} as MCP_CLIENTS
+);
 
 const main = async () => {
   program.option("-m, --message <optionValue>", "ユーザーのメッセージ");
@@ -63,7 +62,7 @@ const main = async () => {
           (tool) => ({
             type: "function",
             function: {
-              name: `${serverName}_${tool.name}`, // NOTE: {サーバー名}_ というprefixを追加する
+              name: appendServerPrefix(tool.name, serverName), // NOTE: {サーバー名}_ というprefixを追加する
               description: tool.description,
               strict: true,
               parameters: { ...tool.inputSchema, additionalProperties: false },
@@ -99,7 +98,7 @@ const main = async () => {
 
   const toolMessages: ChatCompletionMessageParam[] = await Promise.all(
     toolCalls.map(async (call) => {
-      const serverName = getMcpServerName(call.function.name); // NOTE: {サーバー名}_ というprefix を元にMCPサーバーを特定する
+      const serverName = getServerFromPrefix(call.function.name); // NOTE: {サーバー名}_ というprefix を元にMCPサーバーを特定する
       const mcpClient = MCP_CLIENTS[serverName];
 
       // MCPサーバーのtoolを呼び出す
@@ -107,7 +106,7 @@ const main = async () => {
         {
           method: "tools/call",
           params: {
-            name: call.function.name.replace(`${serverName}_`, ""), // NOTE: {サーバー名}_ というprefixを削除する
+            name: removeServerPrefix(call.function.name), // NOTE: {サーバー名}_ というprefixを削除する
             arguments: JSON.parse(call.function.arguments),
           },
         },
