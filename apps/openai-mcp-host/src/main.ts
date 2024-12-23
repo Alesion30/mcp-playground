@@ -1,6 +1,5 @@
 import "dotenv/config";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import {
   CallToolResultSchema,
   ListToolsResultSchema,
@@ -11,28 +10,13 @@ import type {
 } from "openai/resources/index.mjs";
 import { createChatCompletion } from "./openai.js";
 import program from "commander";
-
-const MCP_SERVER_NAME = {
-  /** 天気予報のMCPサーバー */
-  WEATHER: "weather",
-} as const;
-type MCP_SERVER_NAME = (typeof MCP_SERVER_NAME)[keyof typeof MCP_SERVER_NAME];
-
-// MCPサーバーのtransportを定義する
-const mcpServers: {
-  [key in MCP_SERVER_NAME]: StdioClientTransport;
-} = {
-  [MCP_SERVER_NAME.WEATHER]: new StdioClientTransport({
-    command: "node",
-    args: ["../weather-server/dist/main.cjs"],
-  }),
-} as const;
+import { MCP_SERVERS, MCP_SERVER_TYPES } from "@mcp/constants/mcp-servers.mjs";
 
 // MCPサーバーに対応したMCPクライアントを定義する
-const mcpClients: { [key in MCP_SERVER_NAME]: Client } = Object.keys(
-  mcpServers
+const MCP_CLIENTS: { [key in MCP_SERVER_TYPES]: Client } = Object.values(
+  MCP_SERVER_TYPES
 ).reduce((clients, serverName) => {
-  clients[serverName as MCP_SERVER_NAME] = new Client(
+  clients[serverName] = new Client(
     {
       name: `client of ${serverName}`,
       version: "1.0.0",
@@ -42,12 +26,12 @@ const mcpClients: { [key in MCP_SERVER_NAME]: Client } = Object.keys(
     }
   );
   return clients;
-}, {} as { [key in MCP_SERVER_NAME]: Client });
+}, {} as { [key in MCP_SERVER_TYPES]: Client });
 
 // 関数名からMCPサーバー名を取得する
-const getMcpServerName = (functionName: string): MCP_SERVER_NAME => {
-  if (functionName.startsWith(`${MCP_SERVER_NAME.WEATHER}_`)) {
-    return MCP_SERVER_NAME.WEATHER;
+const getMcpServerName = (functionName: string): MCP_SERVER_TYPES => {
+  if (functionName.startsWith(`${MCP_SERVER_TYPES.WEATHER}_`)) {
+    return MCP_SERVER_TYPES.WEATHER;
   }
 
   throw new Error(`Unknown function name: ${functionName}`);
@@ -62,10 +46,10 @@ const main = async () => {
   }
 
   const listToolsResults = await Promise.allSettled(
-    (Object.keys(mcpServers) as (keyof typeof mcpServers)[]).map(
+    (Object.keys(MCP_SERVERS) as (keyof typeof MCP_SERVERS)[]).map(
       async (serverName) => {
-        const mcpServer = mcpServers[serverName];
-        const mcpClient = mcpClients[serverName];
+        const mcpServer = MCP_SERVERS[serverName];
+        const mcpClient = MCP_CLIENTS[serverName];
         await mcpClient.connect(mcpServer);
 
         // 利用可能なtool一覧を取得する
@@ -116,7 +100,7 @@ const main = async () => {
   const toolMessages: ChatCompletionMessageParam[] = await Promise.all(
     toolCalls.map(async (call) => {
       const serverName = getMcpServerName(call.function.name); // NOTE: {サーバー名}_ というprefix を元にMCPサーバーを特定する
-      const mcpClient = mcpClients[serverName];
+      const mcpClient = MCP_CLIENTS[serverName];
 
       // MCPサーバーのtoolを呼び出す
       const callToolResult = await mcpClient.request(
@@ -150,7 +134,7 @@ const main = async () => {
 
   // MCPクライアントをすべてcloseする
   await Promise.allSettled(
-    Object.values(mcpClients).map((client) => client.close())
+    Object.values(MCP_CLIENTS).map((client) => client.close())
   );
 
   console.log("OpenAI response:", result.content);

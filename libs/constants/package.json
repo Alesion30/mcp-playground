@@ -4,5 +4,9 @@
   "private": true,
   "scripts": {
     "type": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mcp/weather-server": "^0.0.0",
+    "@modelcontextprotocol/sdk": "1.0.4"
   }
 }
