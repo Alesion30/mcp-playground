@@ -62,6 +62,8 @@ flowchart LR
 
 実際は、Claude DesktopのようなMCPホストの裏側では、Function Callingを駆使しつつ、MCPクライアントとMCPサーバー間をやりとりしているに過ぎない。Function Callingのプロトコルを管理するMCPクライアントと実際の外部処理を行うMCPサーバーで責務を分けることがMCPの考えにおいて肝となる。基本的にはMCPクライアントとMCPサーバーは1対1の関係となり、MCPホストが複数のMCPクライアントを束ねる形を取る。
 
+下記の図でいうと、tool一覧を取得したり（`request(list/tools)`）、toolからサーバーの関数を実行する（`request(call/tool)`）部分がMCPであると言える。
+
 ```mermaid
 flowchart LR
   User(fa:fa-user User)
