@@ -2,19 +2,27 @@ import OpenAI from "openai";
 import type {
   ChatCompletionMessageParam,
   ChatCompletionTool,
+  ChatModel,
 } from "openai/resources/index.mjs";
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+type CreateChatCompletionParams = {
+  messages: ChatCompletionMessageParam[];
+  tools?: ChatCompletionTool[];
+  model?: ChatModel;
+};
+
 /**
  * チャットのコンプリーションを作成する
  */
-export const createChatCompletion = async (
-  messages: ChatCompletionMessageParam[],
-  tools?: ChatCompletionTool[]
-) => {
+export const createChatCompletion = async ({
+  messages,
+  tools,
+  model = 'gpt-4o',
+}: CreateChatCompletionParams) => {
   const response = await client.chat.completions.create({
-    model: "gpt-3.5-turbo",
+    model,
     messages,
     tools,
   });

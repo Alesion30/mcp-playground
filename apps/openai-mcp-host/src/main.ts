@@ -88,7 +88,11 @@ const main = async () => {
     },
   ];
 
-  const message = await createChatCompletion(messages, tools);
+  const message = await createChatCompletion({
+    messages,
+    tools,
+    model: "gpt-3.5-turbo", // NOTE: function callingはGPT3系の方が安定する気がする・・・
+  });
   messages.push(message);
 
   const toolCalls = message.tool_calls;
@@ -129,7 +133,7 @@ const main = async () => {
   );
   messages.push(...toolMessages);
 
-  const result = await createChatCompletion(messages);
+  const result = await createChatCompletion({ messages });
 
   // MCPクライアントをすべてcloseする
   await Promise.allSettled(
